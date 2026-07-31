@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CoinXDrop - Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#0a0e14;--bg-secondary:#111820;--bg-card:#151d28;--bg-elevated:#1a2332;--fg:#e8edf3;--fg-muted:#6b7d94;--fg-dim:#3d4f63;--accent:#00d4aa;--accent-glow:rgba(0,212,170,0.25);--accent-dark:#00a885;--danger:#ff4757;--warning:#ffa502;--success:#2ed573;--border:rgba(255,255,255,0.06);--glass:rgba(17,24,32,0.85);--radius:14px;--radius-sm:8px;--radius-full:9999px;--shadow:0 8px 32px rgba(0,0,0,0.4);--shadow-accent:0 4px 20px rgba(0,212,170,0.3);--transition:0.3s cubic-bezier(0.4,0,0.2,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:'Outfit',sans-serif;-webkit-font-smoothing:antialiased}
+.app-shell{max-width:430px;margin:0 auto;height:100vh;height:100dvh;position:relative;overflow:hidden;background:var(--bg)}
+.bg-atmosphere{position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:430px;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.bg-atmosphere .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:orbFloat 12s ease-in-out infinite}
+.bg-atmosphere .orb:nth-child(1){width:300px;height:300px;background:var(--accent);top:-80px;right:-60px}
+.bg-atmosphere .orb:nth-child(2){width:200px;height:200px;background:#ff6b6b;bottom:100px;left:-40px;animation-delay:-4s;opacity:0.08}
+.bg-atmosphere .orb:nth-child(3){width:250px;height:250px;background:#ffd93d;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-8s;opacity:0.05}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-30px) scale(1.1)}66%{transform:translate(-15px,20px) scale(0.95)}}
+.page{position:absolute;top:0;left:0;right:0;bottom:64px;overflow-y:auto;overflow-x:hidden;z-index:1;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.page::-webkit-scrollbar{display:none}
+.top-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.top-bar .logo{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--fg);display:flex;align-items:center;gap:8px}
+.top-bar .logo .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.top-bar .actions button{background:none;border:none;color:var(--fg-muted);font-size:20px;cursor:pointer;transition:var(--transition)}
+.top-bar .actions button:hover{color:var(--accent)}
+.feed{padding:12px}
+.post-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.post-header{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.post-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
+.post-user-info{flex:1}
+.post-username{font-weight:600;font-size:14px;color:var(--fg);display:block}
+.post-time{font-size:11px;color:var(--fg-dim);display:block;margin-top:2px}
+.post-media{width:100%;background:var(--bg-secondary);max-height:500px;overflow:hidden}
+.post-media img{width:100%;display:block;object-fit:cover;max-height:500px}
+.post-media video{width:100%;display:block;max-height:500px}
+.post-caption{padding:12px 16px;font-size:13px;color:var(--fg-muted);line-height:1.5}
+.post-caption strong{color:var(--fg);font-weight:600}
+.post-tags{padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:6px}
+.post-tag{font-size:11px;color:var(--accent);background:var(--accent-glow);padding:3px 10px;border-radius:var(--radius-full);font-weight:500}
+.post-actions{display:flex;align-items:center;padding:8px 12px;border-top:1px solid var(--border);gap:4px}
+.post-actions button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:none;color:var(--fg-muted);font-size:13px;font-family:'Outfit',sans-serif;font-weight:500;padding:10px 0;cursor:pointer;transition:var(--transition);border-radius:var(--radius-sm)}
+.post-actions button:hover{color:var(--fg);background:rgba(255,255,255,0.03)}
+.post-actions button.liked{color:var(--danger)}
+.post-actions button.liked i{animation:likePop 0.35s ease}
+@keyframes likePop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.post-actions button i{font-size:18px}
+.comment-section{padding:0 16px 12px;display:none}
+.comment-section.open{display:block}
+.comment-input-wrap{display:flex;gap:8px;margin-bottom:10px}
+.comment-input-wrap input{flex:1;padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-full);color:var(--fg);font-size:13px;font-family:'Outfit',sans-serif;outline:none;transition:var(--transition)}
+.comment-input-wrap input:focus{border-color:var(--accent)}
+.comment-input-wrap button{padding:10px 16px;background:var(--accent);color:#000;font-weight:600;font-size:12px;border:none;border-radius:var(--radius-full);cursor:pointer;font-family:'Outfit',sans-serif;transition:var(--transition)}
+.comment-input-wrap button:hover{box-shadow:var(--shadow-accent)}
+.comment-item{display:flex;gap:10px;margin-bottom:8px}
+.comment-item img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.comment-item .comment-body{flex:1}
+.comment-item .comment-user{font-size:12px;font-weight:600;color:var(--fg)}
+.comment-item .comment-text{font-size:12px;color:var(--fg-muted);margin-top:2px;line-height:1.4}
+.empty-feed{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center}
+.empty-feed i{font-size:48px;color:var(--fg-dim);margin-bottom:16px}
+.empty-feed h3{font-size:18px;color:var(--fg-muted);margin-bottom:8px}
+.empty-feed p{font-size:13px;color:var(--fg-dim)}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:64px;z-index:20;display:flex;align-items:center;justify-content:space-around;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--fg-dim);font-size:10px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:var(--transition);padding:8px 12px;-webkit-tap-highlight-color:transparent}
+.nav-item i{font-size:20px;transition:var(--transition)}
+.nav-item.active{color:var(--accent)}
+.nav-item.active i{filter:drop-shadow(0 0 6px var(--accent))}
+.nav-item:hover{color:var(--fg-muted)}
+.auth-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;padding:20px}
+.auth-modal.show{opacity:1;visibility:visible}
+.auth-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.auth-modal-card{position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;max-width:360px;width:100%;transform:scale(0.9) translateY(20px);transition:transform .35s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.auth-modal.show .auth-modal-card{transform:scale(1) translateY(0)}
+.auth-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--fg-dim);font-size:18px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:var(--transition)}
+.auth-modal-close:hover{color:var(--fg);background:rgba(255,255,255,0.05)}
+.auth-modal-icon{width:48px;height:48px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:20px;color:var(--accent)}
+.auth-modal-card h3{font-size:18px;font-weight:700;margin-bottom:4px;text-align:center}
+.auth-modal-card .auth-sub{font-size:12px;color:var(--fg-muted);margin-bottom:16px;text-align:center}
+.auth-modal-error{display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--danger);text-align:center}
+.auth-modal-error.show{display:block}
+.modal-form-group{margin-bottom:12px}
+.modal-form-group label{display:block;font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.modal-form-input{width:100%;padding:11px 14px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg);font-size:13px;font-family:'Outfit',sans-serif;outline:none;transition:var(--transition)}
+.modal-form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.modal-form-input::placeholder{color:var(--fg-dim)}
+.modal-auth-btn{width:100%;padding:11px;background:var(--accent);color:#000;font-weight:700;font-size:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'Outfit',sans-serif;transition:var(--transition);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.modal-auth-btn:hover{box-shadow:var(--shadow-accent)}
+.modal-auth-btn:disabled{opacity:0.5;cursor:not-allowed;box-shadow:none}
+.modal-auth-btn .modal-spinner{width:16px;height:16px;animation:spin-b .8s linear infinite;display:none}
+.modal-auth-btn.loading .modal-spinner{display:block}
+.modal-auth-btn.loading .modal-btn-text{display:none}
+@keyframes spin-b{100%{transform:rotate(360deg)}}
+.modal-mode-toggle{text-align:center;font-size:12px;color:var(--fg-muted)}
+.modal-mode-toggle a{color:var(--accent);cursor:pointer;font-weight:600;text-decoration:none}
+.modal-cancel{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg-muted);font-size:12px;font-family:'Outfit',sans-serif;cursor:pointer;transition:var(--transition);margin-top:4px}
+.modal-cancel:hover{color:var(--fg);border-color:rgba(255,255,255,0.12)}
+.toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;max-width:400px;width:calc(100% - 36px)}
+.toast{padding:14px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:8px;animation:toastIn .35s ease,toastOut .35s ease 2.5s forwards;box-shadow:var(--shadow)}
+.toast.success{background:#0d2818;border:1px solid rgba(46,213,115,0.3);color:var(--success)}
+.toast.error{background:#2d0f13;border:1px solid rgba(255,71,87,0.3);color:var(--danger)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-20px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+@media(min-width:431px){.app-shell{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="app-shell" id="app">
+  <div class="bg-atmosphere"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+  <div class="page" id="feedPage">
+    <div class="top-bar">
+      <div class="logo"><span class="dot"></span>CoinXDrop</div>
+      <div class="actions"><button onclick="location.reload()" aria-label="Refresh"><i class="fas fa-rotate-right"></i></button></div>
+    </div>
+    <div class="feed" id="feedContainer"><div class="empty-feed" id="emptyFeed"><i class="fas fa-images"></i><h3>No Posts Yet</h3><p>Be the first to share something amazing</p></div></div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="goTo('home.html')"><i class="fas fa-house"></i><span>Home</span></button>
+    <button class="nav-item" onclick="goTo('upload.html')"><i class="fas fa-cloud-arrow-up"></i><span>Upload</span></button>
+    <button class="nav-item" onclick="goTo('wallet.html')"><i class="fas fa-wallet"></i><span>Wallet</span></button>
+    <button class="nav-item" onclick="goTo('referral.html')"><i class="fas fa-gift"></i><span>Referral</span></button>
+    <button class="nav-item" onclick="goTo('profile.html')"><i class="fas fa-user"></i><span>Profile</span></button>
+  </nav>
+  <div class="auth-modal" id="authModal">
+    <div class="auth-modal-overlay" onclick="hideAuthModal()"></div>
+    <div class="auth-modal-card">
+      <button class="auth-modal-close" onclick="hideAuthModal()"><i class="fas fa-times"></i></button>
+      <div class="auth-modal-icon"><i class="fas fa-lock"></i></div>
+      <h3 id="modalTitle">Sign In</h3>
+      <p class="auth-sub" id="modalSub">You need an account to do this</p>
+      <div class="auth-modal-error" id="modalError"></div>
+      <form id="modalForm" onsubmit="return false">
+        <div class="modal-form-group"><label>Email</label><input class="modal-form-input" id="modalEmail" type="email" placeholder="you@example.com"></div>
+        <div class="modal-form-group"><label>Password</label><input class="modal-form-input" id="modalPassword" type="password" placeholder="Min 6 characters" minlength="6"></div>
+        <div class="modal-form-group" id="modalConfirmGroup" style="display:none"><label>Confirm Password</label><input class="modal-form-input" id="modalConfirm" type="password" placeholder="Confirm password"></div>
+        <button class="modal-auth-btn" id="modalAuthBtn" type="submit" onclick="modalHandleAuth()"><span class="modal-btn-text" id="modalBtnText">Sign In</span><svg class="modal-spinner" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="rgba(0,0,0,0.2)" stroke-width="2"/><path d="M10 2a8 8 0 0 1 8 8" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </form>
+      <p class="modal-mode-toggle" id="modalModeToggle">Don't have an account? <a onclick="modalToggleMode()">Sign Up</a></p>
+      <button class="modal-cancel" onclick="hideAuthModal()">Cancel</button>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+<script>
+var firebaseConfig={apiKey:"AIzaSyAmQxNPKANzO8hEng5pdpAR3t7DJtwkG7U",authDomain:"aibmodel.firebaseapp.com",databaseURL:"https://aibmodel-default-rtdb.firebaseio.com",projectId:"aibmodel",storageBucket:"aibmodel.firebasestorage.app",messagingSenderId:"572663832515",appId:"1:572663832515:web:3fea2dac685b9b5f646776"};
+firebase.initializeApp(firebaseConfig);
+var auth=firebase.auth(),db=firebase.database();
+var currentUid=localStorage.getItem('coinxdrop_uid');
+var authCallback=null;
+var loadedPosts={};
+var modalIsSignUp=false;
+
+function goTo(url){window.location.href=url}
+function showToast(msg,type){var c=document.getElementById('toastContainer');var t=document.createElement('div');t.className='toast '+type;var ic=type==='success'?'fa-check-circle':'fa-exclamation-circle';t.innerHTML='<i class="fas '+ic+'"></i>'+msg;c.appendChild(t);setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t)},3000)}
+
+function requireAuth(cb){if(currentUid){cb(currentUid)}else{authCallback=cb;document.getElementById('authModal').classList.add('show')}}
+function hideAuthModal(){document.getElementById('authModal').classList.remove('show');authCallback=null;document.getElementById('modalError').classList.remove('show');document.getElementById('modalError').textContent='';modalIsSignUp=false;document.getElementById('modalTitle').textContent='Sign In';document.getElementById('modalSub').textContent='You need an account to do this';document.getElementById('modalBtnText').textContent='Sign In';document.getElementById('modalConfirmGroup').style.display='none';document.getElementById('modalModeToggle').innerHTML='Don\'t have an account? <a onclick="modalToggleMode()">Sign Up</a>';document.getElementById('modalEmail').value='';document.getElementById('modalPassword').value='';document.getElementById('modalConfirm').value='';document.getElementById('modalAuthBtn').classList.remove('loading');document.getElementById('modalAuthBtn').disabled=false}
+
+function modalToggleMode(){
+  modalIsSignUp=!modalIsSignUp;
+  document.getElementById('modalError').classList.remove('show');
+  if(modalIsSignUp){
+    document.getElementById('modalTitle').textContent='Create Account';
+    document.getElementById('modalSub').textContent='Sign up to continue';
+    document.getElementById('modalBtnText').textContent='Sign Up';
+    document.getElementById('modalConfirmGroup').style.display='block';
+    document.getElementById('modalModeToggle').innerHTML='Already have an account? <a onclick="modalToggleMode()">Sign In</a>';
+  }else{
+    document.getElementById('modalTitle').textContent='Sign In';
+    document.getElementById('modalSub').textContent='You need an account to do this';
+    document.getElementById('modalBtnText').textContent='Sign In';
+    document.getElementById('modalConfirmGroup').style.display='none';
+    document.getElementById('modalModeToggle').innerHTML='Don\'t have an account? <a onclick="modalToggleMode()">Sign Up</a>';
+  }
+}
+
+function modalFriendlyError(e){var m={"auth/email-already-in-use":"Email already registered. Sign in instead.","auth/invalid-email":"Enter a valid email.","auth/weak-password":"Password must be at least 6 characters.","auth/user-not-found":"No account with this email.","auth/wrong-password":"Wrong password.","auth/too-many-requests":"Too many attempts. Wait a moment.","auth/network-request-failed":"Network error.","auth/invalid-credential":"Invalid email or password."};return m[e.code]||"Failed: "+(e.message||"Unknown error.")}
+
+function saveUserToDB(user){var r=db.ref('users/'+user.uid);return r.once('value').then(function(s){if(s.exists()){return r.update({lastLoginAt:new Date().toISOString()})}else{var en=user.email?user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g,''):'user';return r.set({uid:user.uid,displayName:en,email:user.email||null,photoURL:null,provider:'email',createdAt:user.metadata.creationTime||new Date().toISOString(),lastLoginAt:new Date().toISOString(),username:en,wallet:{balance:0,earnings:0},referralCode:user.uid.substring(0,8).toUpperCase()})}}).catch(function(e){console.error(e)})}
+
+function modalHandleAuth(){
+  var errEl=document.getElementById('modalError');errEl.classList.remove('show');
+  var email=document.getElementById('modalEmail').value.trim();
+  var password=document.getElementById('modalPassword').value;
+  if(!email||!password){errEl.textContent='Fill in all fields';errEl.classList.add('show');return}
+  if(modalIsSignUp){var confirm=document.getElementById('modalConfirm').value;if(password!==confirm){errEl.textContent='Passwords do not match';errEl.classList.add('show');return}if(password.length<6){errEl.textContent='Password must be at least 6 characters';errEl.classList.add('show');return}}
+  var btn=document.getElementById('modalAuthBtn');btn.disabled=true;btn.classList.add('loading');
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  var promise=modalIsSignUp?auth.createUserWithEmailAndPassword(email,password):auth.signInWithEmailAndPassword(email,password);
+  promise.then(function(result){
+    var user=result.user;currentUid=user.uid;localStorage.setItem('coinxdrop_uid',user.uid);
+    return saveUserToDB(user).then(function(){hideAuthModal();showToast('Success!','success');if(authCallback){var cb=authCallback;authCallback=null;cb(currentUid)}})
+  }).catch(function(e){btn.disabled=false;btn.classList.remove('loading');errEl.textContent=modalFriendlyError(e);errEl.classList.add('show')});
+}
+
+function timeAgo(ts){if(!ts)return '';var d=new Date(ts),now=new Date(),s=Math.floor((now-d)/1000);if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';return d.toLocaleDateString()}
+
+function createPostHTML(post,postId){
+  var avatar=post.avatar||'https://picsum.photos/seed/'+postId+'/80/80.jpg';
+  var username=post.username||post.displayName||'User';
+  var displayName=post.displayName||username;
+  var mediaHTML='';
+  if(post.type==='video'){mediaHTML='<div class="post-media"><video src="'+post.mediaUrl+'" controls playsinline poster="'+(post.thumbnailUrl||'')+'" preload="metadata"></video></div>'}
+  else{mediaHTML='<div class="post-media"><img src="'+post.mediaUrl+'" alt="Post" loading="lazy" onerror="this.style.display=\'none\'"></div>'}
+  var captionHTML='';if(post.caption){captionHTML='<div class="post-caption"><strong>'+username+'</strong> '+post.caption+'</div>'}
+  var tagsHTML='';if(post.tags&&post.tags.length){var tagArr=typeof post.tags==='string'?post.tags.split(','):post.tags;tagsHTML='<div class="post-tags">'+tagArr.map(function(t){return '<span class="post-tag">#'+t.trim().replace(/^#/,'')+'</span>'}).join('')+'</div>'}
+  var likeCount=post.likeCount||0;var commentCount=post.commentCount||0;
+  var isLiked=loadedPosts[postId]&&loadedPosts[postId].isLiked;
+  var likedClass=isLiked?'liked':'';var likeIcon=isLiked?'fas fa-heart':'far fa-heart';
+  return '<div class="post-card" data-post-id="'+postId+'"><div class="post-header"><img class="post-avatar" src="'+avatar+'" alt="" onerror="this.src=\'https://picsum.photos/seed/default/80/80.jpg\'"><div class="post-user-info"><span class="post-username">'+displayName+'</span><span class="post-time">'+timeAgo(post.createdAt)+'</span></div></div>'+mediaHTML+captionHTML+tagsHTML+'<div class="post-actions"><button class="like-btn '+likedClass+'" id="likeBtn-'+postId+'" onclick="toggleLike(\''+postId+'\')"><i class="'+likeIcon+'"></i><span class="like-count" id="likeCount-'+postId+'">'+likeCount+'</span></button><button onclick="toggleComments(\''+postId+'\')"><i class="far fa-comment"></i><span id="commentCount-'+postId+'">'+commentCount+'</span></button><button onclick="sharePost(\''+postId+'\')"><i class="far fa-share-from-square"></i></button></div><div class="comment-section" id="comments-'+postId+'"><div class="comment-input-wrap"><input type="text" id="commentInput-'+postId+'" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')postComment(\''+postId+'\')"><button onclick="postComment(\''+postId+'\')">Post</button></div><div id="commentList-'+postId+'"></div></div></div>';
+}
+
+function toggleLike(postId){
+  requireAuth(function(uid){
+    var likeRef=db.ref('posts/'+postId+'/likes/'+uid);
+    var btn=document.getElementById('likeBtn-'+postId);
+    var countEl=document.getElementById('likeCount-'+postId);
+    var icon=btn.querySelector('i');var count=parseInt(countEl.textContent);
+    likeRef.once('value',function(snap){
+      if(snap.exists()){likeRef.remove();btn.classList.remove('liked');icon.className='far fa-heart';icon.style.color='';countEl.textContent=Math.max(0,count-1);loadedPosts[postId].isLiked=false;db.ref('posts/'+postId+'/likeCount').set(Math.max(0,count-1))}
+      else{likeRef.set(true);btn.classList.add('liked');icon.className='fas fa-heart';icon.style.color='var(--danger)';countEl.textContent=count+1;loadedPosts[postId].isLiked=true;db.ref('posts/'+postId+'/likeCount').set(count+1)}
+    });
+  });
+}
+
+function toggleComments(postId){var sec=document.getElementById('comments-'+postId);sec.classList.toggle('open');if(sec.classList.contains('open')&&!sec.dataset.loaded){loadComments(postId);sec.dataset.loaded='1'}}
+
+function loadComments(postId){
+  var list=document.getElementById('commentList-'+postId);
+  db.ref('posts/'+postId+'/comments').orderByChild('timestamp').limitToLast(20).on('value',function(snap){
+    list.innerHTML='';if(!snap.exists())return;
+    snap.forEach(function(child){var c=child.val();var ca=c.avatar||'https://picsum.photos/seed/'+child.key+'/56/56.jpg';list.innerHTML+='<div class="comment-item"><img src="'+ca+'" alt="" onerror="this.src=\'https://picsum.photos/seed/default/56/56.jpg\'"><div class="comment-body"><span class="comment-user">'+(c.username||'User')+'</span><p class="comment-text">'+c.text+'</p></div></div>'});
+  });
+}
+
+function postComment(postId){
+  requireAuth(function(uid){
+    var input=document.getElementById('commentInput-'+postId);var text=input.value.trim();if(!text)return;input.value='';
+    db.ref('users/'+uid).once('value',function(uSnap){
+      var ud=uSnap.val()||{};
+      db.ref('posts/'+postId+'/comments').push({userId:uid,username:ud.username||ud.displayName||'User',avatar:ud.avatar||ud.photoURL||'',text:text,timestamp:firebase.database.ServerValue.TIMESTAMP}).then(function(){
+        db.ref('posts/'+postId+'/commentCount').transaction(function(count){return(count||0)+1});var countEl=document.getElementById('commentCount-'+postId);countEl.textContent=parseInt(countEl.textContent)+1;
+      });
+    });
+  });
+}
+
+function sharePost(postId){requireAuth(function(){if(navigator.share){navigator.share({title:'CoinXDrop Post',url:window.location.href}).catch(function(){})}else{navigator.clipboard.writeText(window.location.href).then(function(){showToast('Link copied','success')})}})}
+
+function loadFeed(){
+  var container=document.getElementById('feedContainer');var emptyEl=document.getElementById('emptyFeed');
+  db.ref('posts').orderByChild('createdAt').limitToLast(50).on('value',function(snap){
+    var posts=[];snap.forEach(function(child){posts.push({id:child.key,data:child.val()})});posts.reverse();
+    if(posts.length===0){emptyEl.style.display='flex';return}
+    emptyEl.style.display='none';var html='';
+    posts.forEach(function(p){loadedPosts[p.id]=loadedPosts[p.id]||{isLiked:false};if(currentUid&&p.data.likes&&p.data.likes[currentUid]){loadedPosts[p.id].isLiked=true}html+=createPostHTML(p.data,p.id)});
+    container.innerHTML=html;
+  });
+}
+
+if(currentUid){db.ref('users/'+currentUid).once('value',function(snap){if(snap.exists()){})})};
+loadFeed();
+</script>
+</body>
+</html>

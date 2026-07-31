@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CoinXDrop - Upload</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#0a0e14;--bg-secondary:#111820;--bg-card:#151d28;--bg-elevated:#1a2332;--fg:#e8edf3;--fg-muted:#6b7d94;--fg-dim:#3d4f63;--accent:#00d4aa;--accent-glow:rgba(0,212,170,0.25);--accent-dark:#00a885;--danger:#ff4757;--warning:#ffa502;--success:#2ed573;--border:rgba(255,255,255,0.06);--glass:rgba(17,24,32,0.85);--radius:14px;--radius-sm:8px;--radius-full:9999px;--shadow:0 8px 32px rgba(0,0,0,0.4);--shadow-accent:0 4px 20px rgba(0,212,170,0.3);--transition:0.3s cubic-bezier(0.4,0,0.2,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:'Outfit',sans-serif;-webkit-font-smoothing:antialiased}
+.app-shell{max-width:430px;margin:0 auto;height:100vh;height:100dvh;position:relative;overflow:hidden;background:var(--bg)}
+.bg-atmosphere{position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:430px;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.bg-atmosphere .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:orbFloat 12s ease-in-out infinite}
+.bg-atmosphere .orb:nth-child(1){width:300px;height:300px;background:var(--accent);top:-80px;right:-60px}
+.bg-atmosphere .orb:nth-child(2){width:200px;height:200px;background:#ff6b6b;bottom:100px;left:-40px;animation-delay:-4s;opacity:0.08}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-30px) scale(1.1)}66%{transform:translate(-15px,20px) scale(0.95)}}
+.page{position:absolute;top:0;left:0;right:0;bottom:64px;overflow-y:auto;overflow-x:hidden;z-index:1;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.page::-webkit-scrollbar{display:none}
+.top-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.top-bar h2{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+.upload-content{padding:20px 18px 30px}
+.type-tabs{display:flex;gap:8px;margin-bottom:24px}
+.type-tab{flex:1;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg-muted);font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:var(--transition);text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}
+.type-tab:hover{border-color:rgba(255,255,255,0.12);color:var(--fg)}
+.type-tab.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent)}
+.type-tab i{font-size:18px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.form-input{width:100%;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:var(--transition);resize:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.form-input::placeholder{color:var(--fg-dim)}
+.input-toggle{display:flex;gap:8px;margin-bottom:18px}
+.input-toggle button{flex:1;padding:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg-muted);font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:var(--transition)}
+.input-toggle button.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent)}
+.file-upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:18px}
+.file-upload-zone:hover{border-color:var(--accent);background:rgba(0,212,170,0.03)}
+.file-upload-zone i{font-size:32px;color:var(--fg-dim);margin-bottom:10px;display:block}
+.file-upload-zone p{font-size:13px;color:var(--fg-muted)}
+.file-upload-zone .file-name{font-size:12px;color:var(--accent);margin-top:8px;word-break:break-all}
+.file-upload-zone input{display:none}
+.preview-area{margin-bottom:18px;border-radius:var(--radius);overflow:hidden;background:var(--bg-card);display:none}
+.preview-area img,.preview-area video{width:100%;display:block;max-height:300px;object-fit:cover}
+.upload-btn{width:100%;padding:14px;background:var(--accent);color:#000;font-weight:700;font-size:15px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'Outfit',sans-serif;transition:var(--transition);margin-top:8px}
+.upload-btn:hover{box-shadow:var(--shadow-accent);transform:translateY(-1px)}
+.upload-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.upload-progress{display:none;margin-top:12px}
+.upload-progress .progress-bar-bg{width:100%;height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden}
+.upload-progress .progress-bar-fill{height:100%;background:var(--accent);border-radius:3px;width:0%;transition:width 0.3s ease}
+.upload-progress .progress-text{font-size:12px;color:var(--fg-muted);margin-top:6px;text-align:center}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:64px;z-index:20;display:flex;align-items:center;justify-content:space-around;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--fg-dim);font-size:10px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:var(--transition);padding:8px 12px;-webkit-tap-highlight-color:transparent}
+.nav-item i{font-size:20px;transition:var(--transition)}
+.nav-item.active{color:var(--accent)}
+.nav-item.active i{filter:drop-shadow(0 0 6px var(--accent))}
+.nav-item:hover{color:var(--fg-muted)}
+.auth-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;padding:20px}
+.auth-modal.show{opacity:1;visibility:visible}
+.auth-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px)}
+.auth-modal-card{position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;max-width:360px;width:100%;transform:scale(0.9) translateY(20px);transition:transform .35s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.auth-modal.show .auth-modal-card{transform:scale(1) translateY(0)}
+.auth-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--fg-dim);font-size:18px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:var(--transition)}
+.auth-modal-close:hover{color:var(--fg);background:rgba(255,255,255,0.05)}
+.auth-modal-icon{width:48px;height:48px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:20px;color:var(--accent)}
+.auth-modal-card h3{font-size:18px;font-weight:700;margin-bottom:4px;text-align:center}
+.auth-modal-card .auth-sub{font-size:12px;color:var(--fg-muted);margin-bottom:16px;text-align:center}
+.auth-modal-error{display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--danger);text-align:center}
+.auth-modal-error.show{display:block}
+.modal-form-group{margin-bottom:12px}
+.modal-form-group label{display:block;font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.modal-form-input{width:100%;padding:11px 14px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg);font-size:13px;font-family:'Outfit',sans-serif;outline:none;transition:var(--transition)}
+.modal-form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.modal-form-input::placeholder{color:var(--fg-dim)}
+.modal-auth-btn{width:100%;padding:11px;background:var(--accent);color:#000;font-weight:700;font-size:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'Outfit',sans-serif;transition:var(--transition);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.modal-auth-btn:hover{box-shadow:var(--shadow-accent)}
+.modal-auth-btn:disabled{opacity:0.5;cursor:not-allowed;box-shadow:none}
+.modal-auth-btn .modal-spinner{width:16px;height:16px;animation:spin-b .8s linear infinite;display:none}
+.modal-auth-btn.loading .modal-spinner{display:block}
+.modal-auth-btn.loading .modal-btn-text{display:none}
+@keyframes spin-b{100%{transform:rotate(360deg)}}
+.modal-mode-toggle{text-align:center;font-size:12px;color:var(--fg-muted)}
+.modal-mode-toggle a{color:var(--accent);cursor:pointer;font-weight:600;text-decoration:none}
+.modal-cancel{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg-muted);font-size:12px;font-family:'Outfit',sans-serif;cursor:pointer;transition:var(--transition);margin-top:4px}
+.modal-cancel:hover{color:var(--fg);border-color:rgba(255,255,255,0.12)}
+.toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;max-width:400px;width:calc(100% - 36px)}
+.toast{padding:14px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:8px;animation:toastIn .35s ease,toastOut .35s ease 2.5s forwards;box-shadow:var(--shadow)}
+.toast.success{background:#0d2818;border:1px solid rgba(46,213,115,0.3);color:var(--success)}
+.toast.error{background:#2d0f13;border:1px solid rgba(255,71,87,0.3);color:var(--danger)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-20px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+@media(min-width:431px){.app-shell{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="app-shell" id="app">
+  <div class="bg-atmosphere"><div class="orb"></div><div class="orb"></div></div>
+  <div class="page">
+    <div class="top-bar"><h2>Upload</h2></div>
+    <div class="upload-content">
+      <div class="type-tabs">
+        <button class="type-tab active" onclick="switchType('image')"><i class="fas fa-image"></i> Image</button>
+        <button class="type-tab" onclick="switchType('video')"><i class="fas fa-video"></i> Video</button>
+      </div>
+      <div id="imageSection">
+        <div class="input-toggle">
+          <button class="active" onclick="switchImageInput('file',this)">Upload File</button>
+          <button onclick="switchImageInput('url',this)">Image URL</button>
+        </div>
+        <div id="imageFileZone" class="file-upload-zone" onclick="document.getElementById('imageFileInput').click()">
+          <i class="fas fa-cloud-arrow-up"></i><p>Tap to select an image</p><div class="file-name" id="imageFileName"></div>
+          <input type="file" id="imageFileInput" accept="image/*">
+        </div>
+        <div id="imageUrlZone" style="display:none" class="form-group">
+          <input class="form-input" id="imageUrlInput" type="url" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="preview-area" id="imagePreview"><img id="imagePreviewImg" src="" alt="Preview"></div>
+      </div>
+      <div id="videoSection" style="display:none">
+        <div class="form-group"><label>Video URL</label><input class="form-input" id="videoUrlInput" type="url" placeholder="https://example.com/video.mp4"></div>
+        <div class="form-group"><label>Thumbnail</label>
+          <div class="input-toggle"><button class="active" onclick="switchThumbInput('file',this)">Upload File</button><button onclick="switchThumbInput('url',this)">Thumbnail URL</button></div>
+          <div id="thumbFileZone" class="file-upload-zone" onclick="document.getElementById('thumbFileInput').click()" style="margin-top:8px">
+            <i class="fas fa-cloud-arrow-up"></i><p>Tap to select thumbnail</p><div class="file-name" id="thumbFileName"></div>
+            <input type="file" id="thumbFileInput" accept="image/*">
+          </div>
+          <div id="thumbUrlZone" style="display:none;margin-top:8px"><input class="form-input" id="thumbUrlInput" type="url" placeholder="https://example.com/thumb.jpg"></div>
+          <div class="preview-area" id="thumbPreview" style="margin-top:8px"><img id="thumbPreviewImg" src="" alt="Thumbnail"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Caption <span style="color:var(--fg-dim);text-transform:none;font-weight:400">(optional)</span></label><input class="form-input" id="captionInput" type="text" placeholder="Write a caption..." maxlength="200"></div>
+      <div class="form-group"><label>Tags <span style="color:var(--fg-dim);text-transform:none;font-weight:400">(optional, comma separated)</span></label><input class="form-input" id="tagsInput" type="text" placeholder="nature, sunset, cool"></div>
+      <div class="form-group"><label>Description <span style="color:var(--fg-dim);text-transform:none;font-weight:400">(optional)</span></label><textarea class="form-input" id="descInput" rows="3" placeholder="Describe your post..." maxlength="500"></textarea></div>
+      <div class="upload-progress" id="uploadProgress"><div class="progress-bar-bg"><div class="progress-bar-fill" id="uploadProgressFill"></div></div><div class="progress-text" id="uploadProgressText">Uploading... 0%</div></div>
+      <button class="upload-btn" id="uploadBtn" onclick="handleUpload()">Upload Post</button>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="goTo('home.html')"><i class="fas fa-house"></i><span>Home</span></button>
+    <button class="nav-item active" onclick="goTo('upload.html')"><i class="fas fa-cloud-arrow-up"></i><span>Upload</span></button>
+    <button class="nav-item" onclick="goTo('wallet.html')"><i class="fas fa-wallet"></i><span>Wallet</span></button>
+    <button class="nav-item" onclick="goTo('referral.html')"><i class="fas fa-gift"></i><span>Referral</span></button>
+    <button class="nav-item" onclick="goTo('profile.html')"><i class="fas fa-user"></i><span>Profile</span></button>
+  </nav>
+  <div class="auth-modal" id="authModal">
+    <div class="auth-modal-overlay" onclick="hideAuthModal()"></div>
+    <div class="auth-modal-card">
+      <button class="auth-modal-close" onclick="hideAuthModal()"><i class="fas fa-times"></i></button>
+      <div class="auth-modal-icon"><i class="fas fa-lock"></i></div>
+      <h3 id="modalTitle">Sign In</h3>
+      <p class="auth-sub" id="modalSub">Sign in to upload content</p>
+      <div class="auth-modal-error" id="modalError"></div>
+      <form id="modalForm" onsubmit="return false">
+        <div class="modal-form-group"><label>Email</label><input class="modal-form-input" id="modalEmail" type="email" placeholder="you@example.com"></div>
+        <div class="modal-form-group"><label>Password</label><input class="modal-form-input" id="modalPassword" type="password" placeholder="Min 6 characters" minlength="6"></div>
+        <div class="modal-form-group" id="modalConfirmGroup" style="display:none"><label>Confirm Password</label><input class="modal-form-input" id="modalConfirm" type="password" placeholder="Confirm password"></div>
+        <button class="modal-auth-btn" id="modalAuthBtn" type="submit" onclick="modalHandleAuth()"><span class="modal-btn-text" id="modalBtnText">Sign In</span><svg class="modal-spinner" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="rgba(0,0,0,0.2)" stroke-width="2"/><path d="M10 2a8 8 0 0 1 8 8" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </form>
+      <p class="modal-mode-toggle" id="modalModeToggle">Don't have an account? <a onclick="modalToggleMode()">Sign Up</a></p>
+      <button class="modal-cancel" onclick="hideAuthModal()">Cancel</button>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+<script>
+var firebaseConfig={apiKey:"AIzaSyAmQxNPKANzO8hEng5pdpAR3t7DJtwkG7U",authDomain:"aibmodel.firebaseapp.com",databaseURL:"https://aibmodel-default-rtdb.firebaseio.com",projectId:"aibmodel",storageBucket:"aibmodel.firebasestorage.app",messagingSenderId:"572663832515",appId:"1:572663832515:web:3fea2dac685b9b5f646776"};
+firebase.initializeApp(firebaseConfig);
+var auth=firebase.auth(),db=firebase.database();
+var currentUid=localStorage.getItem('coinxdrop_uid');
+var currentUploadType='image',imageInputMode='file',thumbInputMode='file',imageFile=null,thumbFile=null,modalIsSignUp=false;
+var CLOUDINARY_URL='https://api.cloudinary.com/v1_1/dxdcjxigq/image/upload',CLOUDINARY_PRESET='Coinxdrop';
+function goTo(url){window.location.href=url}
+function showToast(msg,type){var c=document.getElementById('toastContainer');var t=document.createElement('div');t.className='toast '+type;t.innerHTML='<i class="fas '+(type==='success'?'fa-check-circle':'fa-exclamation-circle')+'"></i>'+msg;c.appendChild(t);setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t)},3000)}
+function hideAuthModal(){document.getElementById('authModal').classList.remove('show');document.getElementById('modalError').classList.remove('show');modalIsSignUp=false;document.getElementById('modalTitle').textContent='Sign In';document.getElementById('modalBtnText').textContent='Sign In';document.getElementById('modalConfirmGroup').style.display='none';document.getElementById('modalModeToggle').innerHTML='Don\'t have an account? <a onclick="modalToggleMode()">Sign Up</a>';document.getElementById('modalEmail').value='';document.getElementById('modalPassword').value='';document.getElementById('modalConfirm').value='';document.getElementById('modalAuthBtn').classList.remove('loading');document.getElementById('modalAuthBtn').disabled=false}
+function modalToggleMode(){modalIsSignUp=!modalIsSignUp;document.getElementById('modalError').classList.remove('show');if(modalIsSignUp){document.getElementById('modalTitle').textContent='Create Account';document.getElementById('modalBtnText').textContent='Sign Up';document.getElementById('modalConfirmGroup').style.display='block';document.getElementById('modalModeToggle').innerHTML='Already have an account? <a onclick="modalToggleMode()">Sign In</a>'}else{document.getElementById('modalTitle').textContent='Sign In';document.getElementById('modalBtnText').textContent='Sign In';document.getElementById('modalConfirmGroup').style.display='none';document.getElementById('modalModeToggle').innerHTML='Don\'t have an account? <a onclick="modalToggleMode()">Sign Up</a>'}}
+function modalFriendlyError(e){var m={"auth/email-already-in-use":"Email already registered.","auth/invalid-email":"Enter a valid email.","auth/weak-password":"Min 6 characters.","auth/user-not-found":"No account with this email.","auth/wrong-password":"Wrong password.","auth/too-many-requests":"Too many attempts.","auth/network-request-failed":"Network error.","auth/invalid-credential":"Invalid email or password."};return m[e.code]||"Failed: "+(e.message||"Error.")}
+function saveUserToDB(user){var r=db.ref('users/'+user.uid);return r.once('value').then(function(s){if(s.exists()){return r.update({lastLoginAt:new Date().toISOString()})}else{var en=user.email?user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g,''):'user';return r.set({uid:user.uid,displayName:en,email:user.email||null,photoURL:null,provider:'email',createdAt:user.metadata.creationTime||new Date().toISOString(),lastLoginAt:new Date().toISOString(),username:en,wallet:{balance:0,earnings:0},referralCode:user.uid.substring(0,8).toUpperCase()})}}).catch(function(e){console.error(e)})}
+function modalHandleAuth(){var errEl=document.getElementById('modalError');errEl.classList.remove('show');var email=document.getElementById('modalEmail').value.trim();var password=document.getElementById('modalPassword').value;if(!email||!password){errEl.textContent='Fill in all fields';errEl.classList.add('show');return}if(modalIsSignUp){var confirm=document.getElementById('modalConfirm').value;if(password!==confirm){errEl.textContent='Passwords do not match';errEl.classList.add('show');return}}var btn=document.getElementById('modalAuthBtn');btn.disabled=true;btn.classList.add('loading');auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);var promise=modalIsSignUp?auth.createUserWithEmailAndPassword(email,password):auth.signInWithEmailAndPassword(email,password);promise.then(function(result){var user=result.user;currentUid=user.uid;localStorage.setItem('coinxdrop_uid',user.uid);return saveUserToDB(user).then(function(){hideAuthModal();showToast('Success!','success')})}).catch(function(e){btn.disabled=false;btn.classList.remove('loading');errEl.textContent=modalFriendlyError(e);errEl.classList.add('show')})}
+function switchType(type){currentUploadType=type;document.querySelectorAll('.type-tab').forEach(function(t,i){t.classList.toggle('active',i===(type==='image'?0:1))});document.getElementById('imageSection').style.display=type==='image'?'block':'none';document.getElementById('videoSection').style.display=type==='video'?'block':'none'}
+function switchImageInput(mode,btn){imageInputMode=mode;btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');document.getElementById('imageFileZone').style.display=mode==='file'?'block':'none';document.getElementById('imageUrlZone').style.display=mode==='url'?'block':'none'}
+function switchThumbInput(mode,btn){thumbInputMode=mode;btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');document.getElementById('thumbFileZone').style.display=mode==='file'?'block':'none';document.getElementById('thumbUrlZone').style.display=mode==='url'?'block':'none'}
+document.getElementById('imageFileInput').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){showToast('Select an image','error');return}imageFile=f;document.getElementById('imageFileName').textContent=f.name;var reader=new FileReader();reader.onload=function(ev){document.getElementById('imagePreviewImg').src=ev.target.result;document.getElementById('imagePreview').style.display='block'};reader.readAsDataURL(f)});
+document.getElementById('thumbFileInput').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){showToast('Select an image','error');return}thumbFile=f;document.getElementById('thumbFileName').textContent=f.name;var reader=new FileReader();reader.onload=function(ev){document.getElementById('thumbPreviewImg').src=ev.target.result;document.getElementById('thumbPreview').style.display='block'};reader.readAsDataURL(f)});
+document.getElementById('imageUrlInput').addEventListener('input',function(e){var url=e.target.value.trim();if(url){document.getElementById('imagePreviewImg').src=url;document.getElementById('imagePreview').style.display='block'}else{document.getElementById('imagePreview').style.display='none'}});
+document.getElementById('thumbUrlInput').addEventListener('input',function(e){var url=e.target.value.trim();if(url){document.getElementById('thumbPreviewImg').src=url;document.getElementById('thumbPreview').style.display='block'}else{document.getElementById('thumbPreview').style.display='none'}});
+function uploadFileToCloudinary(file,onProgress,onComplete,onError){var formData=new FormData();formData.append('file',file);formData.append('upload_preset',CLOUDINARY_PRESET);var xhr=new XMLHttpRequest();xhr.open('POST',CLOUDINARY_URL,true);xhr.upload.addEventListener('progress',function(e){if(e.lengthComputable)onProgress(Math.round((e.loaded/e.total)*100))});xhr.onload=function(){if(xhr.status===200){try{onComplete(JSON.parse(xhr.responseText).secure_url)}catch(e){onError('Parse error')}}else{onError('Upload failed: '+xhr.status)}};xhr.onerror=function(){onError('Network error')};xhr.send(formData)}
+function handleUpload(){if(!currentUid){document.getElementById('authModal').classList.add('show');return}var btn=document.getElementById('uploadBtn');btn.disabled=true;btn.textContent='Uploading...';var caption=document.getElementById('captionInput').value.trim();var tags=document.getElementById('tagsInput').value.trim();var desc=document.getElementById('descInput').value.trim();var progressEl=document.getElementById('uploadProgress'),fillEl=document.getElementById('uploadProgressFill'),textEl=document.getElementById('uploadProgressText');progressEl.style.display='block';fillEl.style.width='0%';textEl.textContent='Uploading... 0%';
+function doUpload(mediaUrl,thumbnailUrl){db.ref('users/'+currentUid).once('value',function(uSnap){var ud=uSnap.val()||{};var postData={userId:currentUid,username:ud.username||ud.displayName||'user',displayName:ud.displayName||ud.username||'User',avatar:ud.avatar||ud.photoURL||'',type:currentUploadType,mediaUrl:mediaUrl,thumbnailUrl:thumbnailUrl||'',caption:caption,tags:tags,description:desc,likeCount:0,commentCount:0,createdAt:firebase.database.ServerValue.TIMESTAMP,likes:{}};db.ref('posts').push(postData).then(function(){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast('Post uploaded!','success');document.getElementById('captionInput').value='';document.getElementById('tagsInput').value='';document.getElementById('descInput').value='';document.getElementById('imagePreview').style.display='none';document.getElementById('thumbPreview').style.display='none';document.getElementById('imageFileName').textContent='';document.getElementById('thumbFileName').textContent='';document.getElementById('videoUrlInput').value='';document.getElementById('imageUrlInput').value='';document.getElementById('thumbUrlInput').value='';imageFile=null;thumbFile=null}).catch(function(err){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast('Failed: '+err.message,'error')})})}
+if(currentUploadType==='image'){if(imageInputMode==='file'&&imageFile){uploadFileToCloudinary(imageFile,function(pct){fillEl.style.width=pct+'%';textEl.textContent='Uploading image... '+pct+'%'},function(url){doUpload(url,'')},function(err){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast(err,'error')})}else if(imageInputMode==='url'){var url=document.getElementById('imageUrlInput').value.trim();if(!url){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast('Enter an image URL','error');return}doUpload(url,'')}else{progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast('Select or enter an image','error')}}else{var videoUrl=document.getElementById('videoUrlInput').value.trim();if(!videoUrl){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast('Enter a video URL','error');return}if(thumbInputMode==='file'&&thumbFile){uploadFileToCloudinary(thumbFile,function(pct){fillEl.style.width=pct+'%';textEl.textContent='Uploading thumbnail... '+pct+'%'},function(url){doUpload(videoUrl,url)},function(err){progressEl.style.display='none';btn.disabled=false;btn.textContent='Upload Post';showToast(err,'error')})}else if(thumbInputMode==='url'){doUpload(videoUrl,document.getElementById('thumbUrlInput').value.trim())}else{doUpload(videoUrl,'')}}}
+</script>
+</body>
+</html>
